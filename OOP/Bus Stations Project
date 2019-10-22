@@ -1,0 +1,413 @@
+//131 Bazavan Cristian GNU gcc
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+ifstream in("date.in");
+
+class Statie
+{
+protected:
+    string strada;
+    int nr,sector;
+    string nume;
+    int nr_mijloace;
+    vector<int>mijloace;
+    string tip;
+    bool obiective;
+    int cod;
+public:
+    vector<int> get_autobuze()
+    {
+        return mijloace;
+    }
+    string get_tip()
+    {
+        return tip;
+    }
+    int get_cod()
+    {
+        return cod;
+    }
+    int get_nr()
+    {
+        return nr;
+    }
+    int get_sector()
+    {
+        return sector;
+    }
+    string get_nume()
+    {
+        return nume;
+    }
+    string get_strada()
+    {
+        return strada;
+    }
+    void set_cod(int cod1)
+    {
+        cod=cod1;
+    }
+    Statie()
+    {
+        strada=".";
+        nr=sector=0;
+        cod++;
+        nume=".";
+    }
+    Statie operator =(Statie *A)
+    {
+        if(this!=A)
+        {
+            tip=A->tip;
+            nume=A->nume;
+            strada=A->strada;
+            nr=A->nr;
+            sector=A->sector;
+            mijloace=A->mijloace;
+            cod=A->cod;
+            obiective=A->obiective;
+            nr_mijloace=A->nr_mijloace;
+        }
+        return *this;
+
+    }
+    Statie (string tip1, string nume1, string strada1, int nr1,int sector1, bool obiective1, int nr_mij1,vector<int> &mijloace1,int cod1)
+    {
+        tip=tip1;
+        nume=nume1;
+        strada=strada1;
+        nr=nr1;
+        sector=sector1;
+        obiective=obiective1;
+        nr_mijloace=nr_mij1;
+        mijloace=mijloace1;
+        cod=cod1;
+    }
+    friend istream &operator >>(istream &in, Statie *A)
+    {
+        in>>A->tip;
+        in>>A->nume;
+        in>>A->strada;
+        in>>A->nr>>A->sector;
+        in>>A->obiective;
+        in>>A->nr_mijloace;
+        for(int i=1;i<=A->nr_mijloace;i++)
+        {
+            int  x;
+            in>>x;
+            A->mijloace.push_back(x);
+        }
+        //return in;
+    }
+    virtual void afis()
+    {
+        cout<<tip<<cod<<"  Nume: "<<nume<<"  Strada: "<<strada<<"  Nr: "<<nr<<"  Sector: "<<sector<<" ";
+        if(obiective==1)
+            cout<<"Obiective : Da ";
+        else
+            cout<<"Obiective : Nu ";
+
+        cout<<"  Mijloace: ";
+        for(int i=0;i<nr_mijloace;i++)
+            cout<<mijloace[i]<<" ";
+        cout<<"\n";
+    }
+};
+template <class T> class G
+{
+protected:
+    vector <T*> E;
+public:
+    friend ostream &operator <<(ostream &out,G &A)
+    {
+        for(auto i:A.E)
+        {
+            i->afis();
+        }
+    }
+    void add(T *A)
+    {
+        E.push_back(A);
+    }
+    void afis_nume(string nume)
+    {
+        int ok=0;
+        for(auto i:E)
+        {
+            if(i->get_nume()==nume)
+            {
+                 i->afis();
+                 ok=1;
+            }
+        }
+        if(ok==0)
+            cout<<"Statia nu exista\n";
+    }
+    void afis_adresa(string strada, int nr, int sector)
+    {
+        int ok=0;
+        for(auto i:E)
+        {
+            if(i->get_strada()==strada && i->get_nr()==nr && i->get_sector()==sector)
+            {
+                i->afis();
+                ok=1;
+            }
+        }
+        if(ok==0)
+            cout<<"Statia nu exista\n";
+    }
+    void afis_cod(int cod)
+    {
+        int ok=0;
+        for(auto i:E)
+        {
+            if(i->get_cod()==cod)
+            {
+                i->afis();
+                ok=1;
+            }
+        }
+        if(ok==0)
+            cout<<"Statia nu exista\n";
+    }
+    void afis_bus(int bus)
+    {
+        int ok=0;
+        for(auto i:E)
+        {
+            vector<int> autobuze=i->get_autobuze();
+            for(auto j: autobuze)
+            {
+                if(j==bus)
+                {
+                    ok=1;
+                    i->afis();
+                    break;
+                }
+            }
+        }
+        if(ok==0)
+            cout<<"Autobuzul nu exista\n";
+    }
+    void afis_pret(string ns1,string ns2)
+    {
+
+        int ok=0;
+        Statie *S1=new Statie();
+        Statie *S2=new Statie();
+        int su=0,se=0;
+        for(auto i:E)
+        {
+            if(i->get_nume()==ns1)
+            {
+                S1=i;
+                if(i->get_tip()=="SU")
+                {
+                    su++;
+                }
+                else
+                    se++;
+                ok++;
+
+            }
+            if(i->get_nume()==ns2)
+            {
+                S2=i;
+                if(i->get_tip()=="SU")
+                {
+                    su++;
+                }
+                else
+                    se++;
+                ok++;
+            }
+            //vector<int> autobuze=i->get_autobuze();
+
+        }
+        if(ok!=2)
+            cout<<"Statiile introduse nu sunt valide\n";
+        else
+        {
+            vector<int> autobuze1=S1->get_autobuze();
+            vector<int> autobuze2=S2->get_autobuze();
+            int linie=0;
+            double pret=2;
+            for(auto i: autobuze1)
+            {
+                for(auto j: autobuze2)
+                {
+                    if(i==j)
+                        linie=1;
+                }
+            }
+            if(su==2 && linie==0)
+            {
+                pret=115*pret/100;
+            }
+            if(se==2 && linie==1)
+            {
+                pret=120*pret/100;
+            }
+            if(se==2 && linie==0)
+            {
+                pret=125*pret/100;
+            }
+            if(se==1 && su==1 && linie==1)
+            {
+                pret=130*pret/100;
+            }
+            if(se==1 && su==1 && linie==0)
+            {
+                pret=14*pret/10;
+            }
+            cout<<"Pretul este: "<<pret<<" lei\n";
+        }
+
+    }
+};
+int main()
+{
+    int n;
+    in>>n;
+    int l=1;
+    G<Statie> Gestiune_statii;
+    for(l=1;l<=n;l++)
+    {
+        Statie *A=new Statie();
+        in>>A;
+        A->set_cod(l);
+        Gestiune_statii.add(A);
+        //A->afis();
+    }
+    cout<<"Statiile aflate in gestiunea punctului de informare sunt:\n";
+    cout<<Gestiune_statii;
+    int op=1;
+    while(op!=5)
+    {
+        cout<<"Introduceti una din variantele:\n";
+        cout<<"1. Adaugati o statie noua \n";
+        cout<<"2. Afisati detaliile unei statii\n";
+        cout<<"3. Afisarea tuturor statiilor prin care trece un autobuz\n";
+        cout<<"4. Estimarea pretului intre doua statii\n";
+        cout<<"5. Stop \n";
+        cout<<"Introduceti operatia dorita:";
+        cin>>op;
+        switch(op)
+        {
+        case 1:
+            {
+                cout<<"Introduceti datele statiei\n";
+                string tip,nume,strada;
+                int nr,sector,nr_mij;
+                bool ob;
+                vector<int>Mij;
+                cout<<"Tip (SU/SE) :";
+                cin>>tip;
+
+                cout<<"Nume strada (fara spatii) :";
+                cin>>nume;
+
+                cout<<"Nr strada: :";
+                cin>>nr;
+
+                cout<<"Sector :";
+                cin>>sector;
+
+                cout<<"Daca are obiective (1/0) :";
+                cin>>ob;
+
+                cout<<"Numarul de mijloace de transport :";
+                cin>>nr_mij;
+
+                cout<<"Mijloace :";
+                for(int i=1;i<=nr_mij;i++)
+                {
+                    int x;
+                    cin>>x;
+                    Mij.push_back(x);
+                }
+                Statie *A= new Statie(tip,nume,strada,nr,sector,ob,nr_mij,Mij,l);
+                l++;
+                Gestiune_statii.add(A);
+
+                break;
+            }
+        case 2:
+            {
+                cout<<"Doriti sa introduceti:\n";
+                cout<<"1. Numele statiei\n";
+                cout<<"2. Adresa statiei\n";
+                cout<<"3. Codul statiei\n";
+                cout<<"Introduceti numarul dorit: ";
+                int nr;
+                cin>>nr;
+                try
+                {
+                    if(nr!=1 && nr!=2 && nr!=3)
+                        throw(1);
+                    if(nr==1)
+                    {
+                        cout<<"Introduceti numele statiei: ";
+                        string nume;
+                        cin>>nume;
+                        Gestiune_statii.afis_nume(nume);
+                    }
+                    if(nr==2)
+                    {
+                        cout<<"Introduceti adresa statiei:(strada nr sector)";
+                        string strada;
+                        int nr,sector;
+                        cin>>strada;
+                        cin>>nr>>sector;
+                        Gestiune_statii.afis_adresa(strada,nr,sector);
+                    }
+                    if(nr==3)
+                    {
+                        cout<<"Introduceti codul statiei: ";
+                        int cod;
+                        cin>>cod;
+                        Gestiune_statii.afis_cod(cod);
+                    }
+                }
+                catch(int u)
+                {
+                    cout<<"Numarul introdus nu este valid\n";
+                }
+                break;
+
+            }
+        case 3:
+            {
+                cout<<"Introduceti numarul autobuzului: ";
+                int bus;
+                cin>>bus;
+                Gestiune_statii.afis_bus(bus);
+                break;
+            }
+        case 4:
+            {
+                cout<<"Introduceti numele celor 2 statii:";
+                string nume1,nume2;
+                cin>>nume1;
+                cin>>nume2;
+                Gestiune_statii.afis_pret(nume1,nume2);
+                break;
+
+            }
+        case 5:
+            {
+                return 0;
+            }
+        default:
+            {
+                cout<<"Operatia introdusa nu este corecta\n";
+                return 0;
+            }
+        }
+
+    }
+
+}
