@@ -1,0 +1,194 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <queue>
+#include <algorithm>
+#include <stack>
+using namespace std;
+
+class Graf
+{
+    int N,M;
+    vector < vector<int> > Edge;
+    public:
+         void AddEdge(int x, int y)
+         {
+             Edge[x].push_back(y);
+             M++;
+         }
+         void set_size(int n)
+         {
+             N=n;
+             Edge.resize(N);
+         }
+         void deleteduplicates()
+         {
+             M=0;
+             for(int i=0;i<N;i++)
+             {
+                 sort(Edge[i].begin(),Edge[i].end());
+                 Edge[i].resize(distance(Edge[i].begin(),unique(Edge[i].begin(),Edge[i].end())));
+                 M+=Edge[i].size();
+             }
+
+         }
+         void set_edges(int m)
+         {
+             M=m;
+
+         }
+         Graf operator +(const Graf &G) const
+         {
+             Graf R;
+             R.set_size(N);
+             R.set_edges(0);
+             for(int i=0;i<N;i++)
+             {
+                 for(auto j: Edge[i])
+                     R.AddEdge(i,j);
+                 for(auto j:G.Edge[i])
+                     R.AddEdge(i,j);
+             }
+             R.deleteduplicates();
+             return R;
+
+         }
+         friend  ifstream & operator >> (ifstream &in,  Graf &c){
+            in>>c.N>>c.M;
+            c.Edge.resize(c.N);
+            int x,y;
+            for(int i=0;i<c.M;i++)
+            {
+                in>>x>>y;
+                c.Edge[x].push_back(y);
+            }
+            return in;
+         }
+         friend ofstream & operator << (ofstream &out, const Graf &c){
+            out<<c.N<<" "<<c.M<<"\n";
+            for(int i=0;i<c.N;i++)
+                for(int j=0;j<c.Edge[i].size();j++)
+                    out<<i<<" "<<c.Edge[i][j]<<"\n";
+            return out;
+         }
+         vector <int> BFS(int nod_start){
+             vector <int> R;
+             bool viz[N]={0};
+             queue <int> q;
+             q.push(nod_start);
+             R.push_back(nod_start);
+             viz[nod_start]=true;
+             while(q.size()>0)
+             {
+                 int f=q.front();
+                 q.pop();
+                 for(auto v: Edge[f])
+                     if(viz[v]==false)
+                     {
+                        q.push(v);
+                        R.push_back(v);
+                        viz[v]=true;
+                     }
+             }
+
+             return R;
+         }
+         vector <int> DFS (int nod_start)
+         {
+             vector <int> R;
+             bool viz[N]={0};
+             DFS(nod_start,R,viz);
+             return R;
+         }
+         vector< vector <int> > matriceDrumuri()
+         {
+             vector <vector <int >> A(N,vector <int >(N,M+1));
+             for(int k=0;k<N;k++)
+                A[k][k]=0;
+             for(int i=0;i<N;i++)
+                for(auto j:Edge[i])
+                    A[i][j]=1;
+
+             for(int k=0;k<N;k++)
+                 for(int i=0;i<N;i++)
+                    for(int j=0;j<N;j++)
+                        A[i][j]=min(A[i][j],A[i][k]+A[k][j]);
+             return A;
+         }
+         vector <vector <int> > GetStrongComp()
+         {
+             cout<<"aici1";
+             vector <vector <int> > ret;
+             stack <int> s;
+             bool viz[N]={0};
+             for(int i=0;i<N;i++)
+                 if(viz[i]==0)
+                    DFS_Strong(i,s,viz);
+            cout<<"aici";
+             Graf tr=GetTranspose();
+             for(int i=0;i<N;i++)
+                viz[i]=0;
+
+             while(s.size()>0)
+             {
+                 int p=s.top();
+                 s.pop();
+                 if(viz[p]==0)
+                 {
+                     vector<int> comp;
+                     tr.DFS(p,comp,viz);
+                     ret.push_back(comp);
+                 }
+             }
+             return ret;
+
+         }
+        private:
+            void DFS(int curent, vector <int> &R,bool viz[])
+            {
+                viz[curent]=true;
+                R.push_back(curent);
+                for(auto v: Edge[curent])
+                    if(viz[v]==0)
+                        DFS(v,R,viz);
+            }
+            void DFS_Strong(int curent,stack <int> &s,bool viz[])
+            {
+                viz[curent]=true;
+                for(auto v: Edge[curent])
+                    if(viz[v]==0)
+                        DFS_Strong(v,s,viz);
+                s.push(curent);
+            }
+            Graf GetTranspose() const
+            {
+                Graf ret;
+                ret.set_size(N);
+                ret.set_edges(0);
+                int i;
+                for(i=0;i<N;i++)
+                {
+                    for(auto j: Edge[i])
+                        ret.AddEdge(j,i);
+
+                }
+                return ret;
+            }
+};
+int main()
+{
+    ifstream in("graf2.in");
+    ofstream out("graf2.out");
+    Graf G;
+    in>>G;
+    vector< vector <int>> ret=G.GetStrongComp();
+    out<<ret.size()<<endl;
+    for(auto comp: ret)
+    {
+       for(auto x: comp)
+            out<<x<<" ";
+        out<<"\n";
+    }
+    return 0;
+
+}
