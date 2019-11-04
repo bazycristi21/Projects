@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+
+// In this part i'll take an image , i will encrpyt that image with the algorithm above and then i'll the decrypt it back
+// as it was in the first time.
 struct pixel
 {
     unsigned char r,g,b;
@@ -51,7 +55,7 @@ void BMP_to_vector(char * nume_fisier,int *H,int *W, struct pixel **m)
     int i,j;
     FILE *file=fopen(nume_fisier, "rb");
     if(file==NULL)
-        printf("Fisierul nu s-a deschis corect.");
+        printf("Could not open the file.\n");
     GetHandW(file,H,W);
     fseek(file,54,SEEK_SET);
     (*m)=( struct pixel*)malloc((*W)*(*H)*sizeof( struct pixel));
@@ -101,7 +105,7 @@ void Encrypt(struct pixel**m, int H, int W,struct pixel **c, char *secret_key)
     int length=H*W,i,j;
     FILE *key=fopen(secret_key,"r");
     if(key==NULL)
-        printf("Fisierul nu s-a deschis corect.");
+        printf("Could not open the file.\n");
     unsigned int seed,*r,*p;
     fscanf(key,"%d",&seed);
     const unsigned int sv;
@@ -109,10 +113,10 @@ void Encrypt(struct pixel**m, int H, int W,struct pixel **c, char *secret_key)
     GenRandom(&r, 2*length, seed);
     (*c)=(struct pixel*)malloc(length*sizeof(struct pixel));
     if(c==NULL)
-        printf("Alocarea nu s-a realizat corect.\n");
+        printf("Could not allocate memory\n");
      struct pixel *q=(struct pixel*)malloc(length*sizeof(struct pixel));
     if(q==NULL)
-        printf("Alocarea nu s-a realizat corect.\n");
+        printf("Could not allocate memory\n");
     RandomPerm(&p,length,r);
 
     for(i=0;i<length;i++)
@@ -136,7 +140,7 @@ void Decrypt(struct pixel **m, int H, int W,struct pixel **c, char *secret_key)
     int i,length=H*W;
     FILE *key=fopen(secret_key,"r");
     if(key==NULL)
-        printf("Fisierul nu s-a deschis corect.");
+        printf("Could not open the file.\n");
     unsigned int seed,*r,*p;
     fscanf(key,"%d",&seed);
     const unsigned int sv;
@@ -164,14 +168,14 @@ void afisare_vector(char *nume_destinatie,char *nume_sursa,struct  pixel **m, in
 {
     FILE *bin=fopen(nume_destinatie,"wb");
     if(bin==NULL)
-        printf("Fisierul nu s-a deschis corect.\n");
+        printf("Could not open the file.\n");
     FILE *file=fopen(nume_sursa,"rb");
     if(file==NULL)
-        printf("Fisierul nu s-a deschis corect.\n");
+        printf("Could not open the file.\n");
     int i,j;
     unsigned int *imagedata=(unsigned int *)malloc(54*sizeof(unsigned int));
     if(imagedata==NULL)
-        printf("Alocarea nu s-a realizat corect.\n");
+        printf("Could not allocate memory\n");
     fread(imagedata,sizeof(char),54,file);
     fwrite(imagedata,sizeof(char),54,bin);
     for(i=H-1;i>=0;i--)
@@ -249,32 +253,35 @@ void chipatrat(struct pixel **m, int H, int W)
     printf("%0.2lf %0.2lf %0.2lf \n",Xr, Xg, Xb);
 
 }
-// PROCESARE DE IMAGINI
+
+//Digit recognition part (Template Matching algorithm)
+
+
 void BMP_to_matrix(char *nume_fisier,int *H,int *W,struct pixel ***n)
 {
     FILE *file=fopen(nume_fisier, "rb");
     if(file==NULL)
-        printf("Fisierul nu s-a deschis corect.");
+        printf("Could not open the file .");
     GetHandW(file,H,W);
     int padding=0,i,j;
     if((3*(*W))%4!=0)
         padding=4-((3*(*W))%4);
     (*n)=(struct pixel**)malloc((*H)*sizeof(struct pixel*));
     if(n==NULL)
-        printf("Alocarea nu s-a realizat corect.");
+        printf("Could not allocate memory");
     for(i=0;i<(*H);i++)
     {
         (*n)[i]=(struct pixel*)malloc(((*W)+1)*sizeof(struct pixel));
         if((*n)[i]==NULL)
         {
-            printf("Alocarea nu s-a realizat corect.");
+            printf("Could not allocate memory");
             break;
         }
 
     }
     unsigned char *x=(unsigned char*)malloc(3*sizeof(unsigned char));
     if(x==NULL)
-        printf("Alocarea nu s-a realizat corect.");
+        printf("Could not allocate memory");
     j=0;
     i=0;
     for(i=(*H)-1;i>=0;i--)
@@ -359,7 +366,9 @@ void templatematching(struct pixel **imagine,struct detectie ***matrice, int *in
     struct pixel **sablon;
     char *p=nume_sablon;
     double prag=0.5;
-    //Extragem cifra care apare in sablon din numele sablonului.
+
+    //We extract the digit that's in the image from the image name
+
     while(*p)
     {
         if(isdigit(*p))
@@ -373,13 +382,13 @@ void templatematching(struct pixel **imagine,struct detectie ***matrice, int *in
     BMP_to_matrix(nume_sablon,&inaltime_sablon,&latime_sablon,&sablon);
     struct pixel **subImagine=( struct pixel **)malloc(inaltime_sablon*sizeof( struct pixel*));
     if(subImagine==NULL)
-        printf("Alocarea nu s-a realizat corect.");
+        printf("Could not allocate memory");
     for(i=0;i<inaltime_sablon;i++)
     {
         subImagine[i]=( struct pixel *)malloc(latime_sablon*sizeof( struct pixel));
         if(subImagine[i]==NULL)
         {
-            printf("Alocarea nu s-a realizat corect.");
+            printf("Could not allocate memory");
             break;
         }
     }
@@ -388,7 +397,8 @@ void templatematching(struct pixel **imagine,struct detectie ***matrice, int *in
     {
         for(j=0; j<W-latime_sablon; j++)
         {
-            //Formam fereastra de aceeasi dimensiune cu sabloanele date
+            //Here we set a window the same size with the image of the digits.
+
             for(k=i;k<i+inaltime_sablon;k++)
             {
                 for(l=j;l<j+latime_sablon;l++)
@@ -402,7 +412,8 @@ void templatematching(struct pixel **imagine,struct detectie ***matrice, int *in
             valCorelatie=corelatie(subImagine,sablon);
             if(valCorelatie>prag)
             {
-                //Daca valoarea corelatiei este mai mare decat pragul dat, salvam indicii si datele despre aceasta.
+
+                // If the corelation value is bigger than the flag 'prag' we save this one.
                 (*matrice)[cifra][indCorelatie[cifra]].x=i;
                 (*matrice)[cifra][indCorelatie[cifra]].y=j;
                 (*matrice)[cifra][indCorelatie[cifra]].valCorelatie=valCorelatie;
@@ -494,7 +505,7 @@ void Color(struct pixel ***imagine,int lungime,struct detectie **A)
                 break;
             }
         }
-        //Coloram in functie de culoarea corespunzatoare
+        //We color the image with a color specifically to each digit.
         for(j=(*A)[i].x;j<(*A)[i].x+15;j++)
         {
             (*imagine)[j][(*A)[i].y].r=(*imagine)[j][(*A)[i].y+10].r=codeb;
@@ -511,8 +522,10 @@ void Color(struct pixel ***imagine,int lungime,struct detectie **A)
 }
 int intersect(struct detectie a, struct detectie b)
 {
+
+    //Here we take care of the problem that 2 detections can intersect
     const int inaltime=15,latime=11;
-    //Ne asiguram ca imaginea din detectia b este la dreapta imaginii din detectia a
+    //First we make sure that the second image is starting at the right of the first one.
     if(a.x>b.x || (a.x==b.x && a.y>b.y))
     {
         struct detectie aux;
@@ -520,7 +533,7 @@ int intersect(struct detectie a, struct detectie b)
         a=b;
         b=aux;
     }
-    //Verificam daca cele doua detectii se intersecteaza
+    // We test if there are any intersections.
     if((b.x<=(a.x+inaltime) && b.y<=(a.y+latime) && b.x>=a.x && b.y>=a.y) || (b.y<=a.y && b.x>=a.x && b.x<=(a.x+inaltime) && (b.y+latime)>=a.y))
     {
         int lungime=a.x+inaltime-b.x;
@@ -574,13 +587,13 @@ void copieGray( struct pixel ***imagine,  struct pixel ***imagineGray, int H, in
     int i,j;
     *imagineGray=( struct pixel**)malloc(H*sizeof( struct pixel*));
     if(imagineGray==NULL)
-        printf("Alocarea nu s-a realizat corect.");
+        printf("Could not allocate memory");
     for(i=0;i<H;i++)
     {
         (*imagineGray)[i]=( struct pixel*)malloc(W*sizeof( struct pixel));
         if((*imagineGray)[i]==NULL)
         {
-            printf("Alocarea nu s-a realizat corect.");
+            printf("Could not allocate memory");
             break;
         }
     }
@@ -601,55 +614,50 @@ int main()
     char *nume_imagine_finala=(char*)malloc(20*sizeof(char));
     char *secret_key=(char*)malloc(20*sizeof(char));
     if(nume_imagine==NULL || nume_imagine_2==NULL || nume_imagine_criptata==NULL || nume_imagine_decriptata==NULL || nume_imagine_finala==NULL || secret_key==NULL)
-        printf("Alocarea nu s-a realizat corect" );
+        printf("Could not allocate memory " );
     struct detectie *A;
-   /* if(A==NULL)
-    {
-        printf("Alocarea nu s-a realizat corect.");
-        return -1;
-    }*/
+
 
     int *indCorelatie=(int *)calloc(10,sizeof(int));
     if(indCorelatie==NULL)
     {
-        printf("Alocarea nu s-a realizat corect.");
+        printf("Could not allocate memory");
         return -1;
     }
-    //Partea 1.
+    //First Part
 
-    //Formarea imaginii in vectorul liniarizat
-    printf("Introduceti numele imaginii de criptat: ");
+    //We upload the image in the program and trasform the pixels in a vector.
+    printf("Type the name of the image: ");
     scanf("%s", nume_imagine);
     BMP_to_vector(nume_imagine,&Hp,&Wp,&m);
-    printf("Valorile functiei chipatrat pentru imaginea originala: ");
-    chipatrat(&m,Hp,Wp);
 
-    //Criptarea imaginii
-    printf("Introduceti numele fisierului care contine cheia de criptare: ");
+
+    //Encrypt the image using the secret key
+    printf("Type the name of the document that has the encryption key: ");
     scanf("%s", secret_key);
-    printf("Introduceti numele imaginii criptate: ");
+    printf("Type the name of the new crypted image: ");
     scanf("%s", nume_imagine_criptata);
     Encrypt(&m,Hp,Wp,&c,secret_key);
     afisare_vector(nume_imagine_criptata,nume_imagine,&m,Hp,Wp);
-    printf("Valorile functiei chipatrat pentru imaginea criptata: ");
-    chipatrat(&m,Hp,Wp);
 
-    //Decriptarea imaginii
+    //DDecrypt the image using the same key
     Decrypt(&m,Hp,Wp,&c,secret_key);
-    printf("Introduceti numele imaginii decriptate: ");
+    printf("Type the name of the decrypted image: ");
     scanf("%s", nume_imagine_decriptata);
     afisare_vector(nume_imagine_decriptata,nume_imagine_criptata,&m,Hp,Wp);
 
-    //Partea a 2.
+    printf("First part complete");
 
-    //Formarea imaginii in matrice
-    printf("Introduceti numele imaginii pe care se aplica algoritmul de templatematching: ");
+    //Second part
+
+    //Upload the image in the program and trasnform it into a matrix.
+    printf("Type the name of the image you want to apply digit recoginition: ");
     scanf("%s", nume_imagine_2);
     BMP_to_matrix(nume_imagine_2,&H,&W,&imagine);
     struct detectie **matrice=(struct detectie**)malloc(10*sizeof(struct detectie*));
     if(matrice==NULL)
     {
-        printf("Alocarea nu s-a realizat corect. ");
+        printf("Could not allocate memory ");
         return -1;
     }
     for(i=0;i<10;i++)
@@ -657,16 +665,16 @@ int main()
         matrice[i]=(struct detectie*)malloc(H*W*sizeof(struct detectie));
         if(matrice[i]==NULL)
         {
-            printf("Alocarea nu s-a realizat corect. " );
+            printf("Could not allocate memory " );
             return -1;
         }
     }
 
-    //Copiem imaginea in una noua si aplicam grayscale pe copie
+    //We apply grayscale to the image in order to be easier to make detections.
     copieGray(&imagine, &imagineGray,H,W);
     grayscale(&imagineGray,H,W);
 
-    //Templatematching pentru fiecare sablon in parte
+    //We make templatematching algorythm with every digit on the matrix
     templatematching(imagineGray,&matrice,indCorelatie,"cifra0.bmp",H,W);
     templatematching(imagineGray,&matrice,indCorelatie,"cifra1.bmp",H,W);
     templatematching(imagineGray,&matrice,indCorelatie,"cifra2.bmp",H,W);
@@ -678,25 +686,25 @@ int main()
     templatematching(imagineGray,&matrice,indCorelatie,"cifra8.bmp",H,W);
     templatematching(imagineGray,&matrice,indCorelatie,"cifra9.bmp",H,W);
 
-    //Pastram doar detectiile cu scorul cel mai mare din cele care se intersecteaza
+    //We choose only those detection who have a bigger score
     lungime=vector_detectii(&matrice,&A,indCorelatie);
-    //Pastram doar detectiile cu scorul cel mai mare.
+
     struct detectie *B=(struct detectie *)calloc(lungime,sizeof(struct detectie));
     if(B==NULL)
     {
-        printf("Alocarea nu s-a realizat corect");
+        printf("Could not allocate memory ");
         return -1;
     }
     eliminareDetectie(lungime,A,&B);
-    //Coloram imaginea originala in functie de detectiile obtinute
+    //Color the digits from the initial image
     Color(&imagine,lungime,&B);
 
-    //Afisam imaginea obtinuta
-    printf("Introduceti numele imaginii obtinute: ");
+    //Export the new image
+    printf("Type the name of the new image: ");
     scanf("%s", nume_imagine_finala);
     afisare_matrice(nume_imagine_finala,nume_imagine_2,&imagine,H,W);
 
-
+    //Free the alocated memory.
     free(nume_imagine);
     free(nume_imagine_2);
     free(nume_imagine_criptata);
